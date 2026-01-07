@@ -1,0 +1,5 @@
+country_code	CHAR(2)
+timezone_id	VARCHAR(40) PRIMARY KEY NOT NULL
+gmt_offset	FLOAT
+dst_offset	FLOAT
+raw_offset	FLOAT

@@ -1,0 +1,19 @@
+iso	CHAR(2) UNIQUE NOT NULL
+iso3	CHAR(3) UNIQUE NOT NULL
+iso_numeric	INTEGER UNIQUE NOT NULL
+fips_code	VARCHAR(80)
+country	VARCHAR(200) UNIQUE NOT NULL
+capital	VARCHAR(200)
+area	BIGINT
+population	BIGINT
+continent	CHAR(2)
+tld	CHAR(2)
+currency_code	CHAR(3)
+currency_name	VARCHAR(200)
+phone	INTEGER
+postal_code_format	VARCHAR(80)
+postal_code_regex	VARCHAR(200)
+languages	VARCHAR(80)
+geoname_id	INTEGER PRIMARY KEY NOT NULL
+neighbours	VARCHAR(200)
+equivalent_fips_code	VARCHAR(80)

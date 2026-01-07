@@ -1,0 +1,2 @@
+geoname_id	INTEGER NOT NULL
+tag	VARCHAR(80)

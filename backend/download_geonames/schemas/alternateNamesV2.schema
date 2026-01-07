@@ -1,0 +1,10 @@
+alternate_name_id	INTEGER PRIMARY KEY NOT NULL
+geoname_id	INTEGER NOT NULL
+iso_language	VARCHAR(7)
+alternate_name	VARCHAR(400)
+is_preferred_name	BOOLEAN
+is_short_name	BOOLEAN
+is_colloquial	BOOLEAN
+is_historic	BOOLEAN
+historic_from	VARCHAR(10)
+historic_to	VARCHAR(10)

@@ -1,0 +1,2 @@
+geoname_id	INTEGER PRIMARY KEY NOT NULL
+admin5_code	VARCHAR(20) NOT NULL
