@@ -4,7 +4,8 @@ import { performance } from 'perf_hooks';
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-const timeout_ms = 60 * 1000; // one minute
+const timeout_ms = 120 * 1000; // two minutes
+const maxRows = 2000;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -53,6 +54,7 @@ export function runSqlCommandsAsync(database: sqlite3.Database,
 
 type SqlQueryResult<T> = {
     rows: T[],
+    truncated: number | null,
     duration: number,
 };
 
@@ -74,21 +76,29 @@ export function runSqlQueryAsync<T = any>(database: sqlite3.Database,
                 timeout_ms
             );
 
+            let numberOfRows = 0;
+            let rows = [] as T[];
+
             // Execute the SQL command on the database
-            database.all(
+            database.each(
                 sql,
                 params,
-                (err, rows) => {
-                    clearTimeout(timer);
-
+                (err, row) => {
                     // Let the promise fail in case of an error.
                     if (err)
                         reject(err);
 
+                    numberOfRows = numberOfRows + 1;
+                    if (numberOfRows <= maxRows) {
+                        rows.push(row as T);
+                    }
+                },
+                () => {
+                    clearTimeout(timer);
+
                     const duration_ms = performance.now() - startTime;
 
-                    // On success, return the resulting rows and the duration of execution.
-                    resolve({ rows: rows as T[], duration: duration_ms });
+                    resolve({ rows: rows, truncated: rows.length < numberOfRows ? numberOfRows: null, duration: duration_ms });
                 }
             );
         }
