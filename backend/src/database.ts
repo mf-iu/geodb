@@ -93,12 +93,16 @@ export function runSqlQueryAsync<T = any>(database: sqlite3.Database,
                         rows.push(row as T);
                     }
                 },
-                () => {
+                (err, numberOfRetrievedRows) => {
                     clearTimeout(timer);
 
                     const duration_ms = performance.now() - startTime;
 
-                    resolve({ rows: rows, truncated: rows.length < numberOfRows ? numberOfRows: null, duration: duration_ms });
+                    // Let the promise fail in case of an error.
+                    if (err)
+                        reject(err);
+                    else
+                        resolve({ rows: rows, truncated: rows.length < numberOfRows ? numberOfRows: null, duration: duration_ms });
                 }
             );
         }
