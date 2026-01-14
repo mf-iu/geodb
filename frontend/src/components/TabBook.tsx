@@ -4,7 +4,8 @@ import Box  from "@mui/material/Box";
 import Tab  from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
-import SqlQuery from "./SqlQuery";
+import SqlCommands from "./SqlCommands";
+import SqlQuery    from "./SqlQuery";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -21,10 +22,12 @@ export default function TabBook() {
                   sx={{ borderRight: 1, borderColor: "divider", minWidth: 120 }}
             >
                 <Tab label="SQL Query" />
+                <Tab label="SQL Commands" />
             </Tabs>
 
             <Box sx={{ flexGrow: 1, p: 1 }}>
                 {tabIndex === 0 && <SqlQuery />}
+                {tabIndex === 1 && <SqlCommands />}
             </Box>
         </Box>
     );
