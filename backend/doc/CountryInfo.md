@@ -15,7 +15,7 @@ Tabelle **countryInfo**
 | **fips_code** | VARCHAR(80) | | | FIPS-Code des Landes |
 | **country** | VARCHAR(200) | | UNIQUE, NOT NULL | Name des Landes in englisch |
 | **capital** | VARCHAR(200) | | | Name der Hauptstadt in englisch |
-| **area** | BIGINT | | | Fläche in Quadratmetern |
+| **area** | BIGINT | | | Fläche in Quadratkilometern |
 | **population** | BIGINT | | | Einwohnerzahl |
 | **continent** | CHAR(2) | | | Abkürzung des Kontinents, in dem das Land liegt |
 | **tld** | CHAR(2) | | | Internet-Top-Level-Domain (mit vorangestelltem Punkt) |
