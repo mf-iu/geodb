@@ -21,7 +21,7 @@ type RowData = Record<string, unknown>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-export default function DataTable() {
+export default function SqlQuery() {
     // --- SQL input ---
     const [sql, setSql] = React.useState(
         "SELECT * FROM allCountries WHERE country_code = 'DE' AND feature_class = 'P' ORDER BY name LIMIT 10;"
@@ -116,7 +116,7 @@ export default function DataTable() {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     return (
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: "90%" }}>
             {/* SQL input */}
             <Box>
                 <TextField label="SQL Statement"
@@ -126,7 +126,7 @@ export default function DataTable() {
                            value={sql}
                            onChange={(e) => setSql(e.target.value)}
                            placeholder="SELECT * FROM allCountries LIMIT 10;"
-                           sx={{ mb: 2, maxWidth: "90%" }}
+                           sx={{ mb: 2 }}
                 />
             </Box>
 
@@ -172,8 +172,8 @@ export default function DataTable() {
 
             {/* Data table */}
             {rows.length > 0 && (
-                <Paper sx={{ width: "90%", overflow: "hidden" }}>
-                    <TableContainer sx={{ maxHeight: 800, width: "100%" }}>
+                <Paper sx={{ overflow: "hidden" }}>
+                    <TableContainer>
                         <Table stickyHeader size="small">
                             <TableHead>
                                 <TableRow>
