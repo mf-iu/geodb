@@ -15,102 +15,55 @@ import TableRow         from "@mui/material/TableRow";
 import TextField        from "@mui/material/TextField";
 import Typography       from "@mui/material/Typography";
 
+import useQuery from "../hooks/useQuery";
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 type RowData = Record<string, unknown>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+const defaultSql = "SELECT * FROM allCountries WHERE country_code = 'DE' AND feature_class = 'P' ORDER BY name LIMIT 100;";
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 export default function SqlQuery() {
     // --- SQL input ---
-    const [sql, setSql] = React.useState(
-        "SELECT * FROM allCountries WHERE country_code = 'DE' AND feature_class = 'P' ORDER BY name LIMIT 10;"
-    );
-    const [rows, setRows] = React.useState<RowData[]>([]);
-    const [loading, setLoading] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
-    const [executionTimeMs, setExecutionTimeMs] = React.useState<number | null>(null);
-    const [truncatedCount, setTruncatedCount] = React.useState<number | null>(null);
+    const [sql, setSql] = React.useState(defaultSql);
 
-    // --- Sorting & pagination ---
+    // --- Pagination ---
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    const columns = React.useMemo(
-        () => (rows.length > 0 ? Object.keys(rows[0]) : []),
-        [rows]
-    );
+    // --- Run the SQL query on submit ---
+    const { result, run } = useQuery();
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     const handleSubmit =
-        async (e: React.FormEvent) => {
+        (e: React.FormEvent) => {
             e.preventDefault();
-
-            setLoading(true);
-            setError(null);
-            setRows([]);
-            setExecutionTimeMs(null);
-            setTruncatedCount(null);
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 300_000); // 5 minutes
-
-            try {
-                const response = await fetch(
-                    "http://localhost:3000/execute-sql-query",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ sql }),
-                        signal: controller.signal,
-                    }
-                );
-
-                clearTimeout(timeoutId);
-
-                // --- Handle server errors with JSON error property ---
-                if (!response.ok) {
-                    const json = await response.json();
-                    throw new Error(json.error || "Query failed");
-                }
-
-                const data = await response.json();
-
-                // Expecting { rows: [...], duration: number, truncated?: number }
-                if (!data || !Array.isArray(data.rows)) {
-                    throw new Error("Invalid API response");
-                }
-
-                setRows(data.rows);
-                setPage(0);
-                setExecutionTimeMs(typeof data.duration === "number" ? data.duration : null);
-                setTruncatedCount(typeof data.truncated === "number" ? data.truncated : null);
-            }
-            catch (err) {
-                clearTimeout(timeoutId);
-                if ((err as any).name === "AbortError") {
-                    setError("Request timed out after 5 minutes.");
-                }
-                else {
-                    setError((err as Error).message);
-                }
-            }
-            finally {
-                setLoading(false);
-            }
+            run(sql);
+            setPage(0);
         };
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    const columns = React.useMemo(
+        () => (result.data?.rows?.length > 0 ? Object.keys(result.data.rows[0]) : []),
+        [result]
+    );
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     const pagedRows = React.useMemo(
         () => {
             const start = page * rowsPerPage;
-            return rows.slice(start, start + rowsPerPage);
+            return result.data?.rows ? result.data?.rows.slice(start, start + rowsPerPage) : [];
         },
-        [rows, page, rowsPerPage]
+        [result, page, rowsPerPage]
     );
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,54 +77,60 @@ export default function SqlQuery() {
                            minRows={4}
                            fullWidth
                            value={sql}
-                           onChange={(e) => setSql(e.target.value)}
-                           placeholder="SELECT * FROM allCountries LIMIT 10;"
+                           onChange={(event) => setSql(event.target.value)}
+                           placeholder={defaultSql}
                            sx={{ mb: 2 }}
                 />
             </Box>
 
             {/* Submit button */}
             <Box>
-                <Button type="submit"
-                        variant="contained"
-                        disabled={loading || !sql.trim()}
-                        sx={{ mb: 2 }}
-                >
+                <Button type="submit" variant="contained" disabled={result.isLoading || !sql.trim()} sx={{ mb: 2 }}>
                     Submit
                 </Button>
             </Box>
 
             {/* Loading */}
-            {loading && (
+            {result.isLoading && (
                 <Box>
                     <CircularProgress sx={{ mb: 2 }} />
                 </Box>
             )}
 
             {/* Error */}
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {result.error !== null && result.error !== undefined && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {result.error}
+                </Alert>
+            )}
+            {/* HTTP Error */}
+            {result.httpStatus !== null && result.httpStatus !== undefined && result.httpStatus?.status !== 200 && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    Request returned with status {result.httpStatus?.status}: {result.httpStatus?.statusText}
+                </Alert>
+            )}
 
             {/* Row count & execution time */}
-            {rows.length >= 0 && executionTimeMs !== null && (
+            {result.data?.rows?.length >= 0 && result.data?.executionTimeMs !== null && (
                 <Box>
                     <Typography variant="body2" sx={{ mb: 1, color: "text.secondary" }}>
-                        Rows: <strong>{rows.length}</strong>
+                        Rows: <strong>{result.data.rows.length}</strong>
                         &nbsp;|&nbsp;
                         Execution time:{" "}
-                        <strong>{executionTimeMs} ms</strong>
+                        <strong>{result.data?.executionTimeMs} ms</strong>
                     </Typography>
                 </Box>
             )}
 
             {/* Truncated warning */}
-            {truncatedCount !== null && (
+            {result.data?.truncatedCount !== null && result.data?.truncatedCount !== undefined && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                    Results were truncated from originally {truncatedCount} rows.
+                    Results were truncated from originally {result.data?.truncatedCount} rows.
                 </Alert>
             )}
 
             {/* Data table */}
-            {rows.length > 0 && (
+            {(result.data?.rows?.length > 0) && (
                 <Paper sx={{ overflow: "hidden" }}>
                     <TableContainer>
                         <Table stickyHeader size="small">
@@ -214,7 +173,7 @@ export default function SqlQuery() {
 
                     {/* Pagination */}
                     <TablePagination component="div"
-                                     count={rows.length}
+                                     count={result.data.rows.length}
                                      page={page}
                                      onPageChange={(_, newPage) => setPage(newPage)}
                                      rowsPerPage={rowsPerPage}
