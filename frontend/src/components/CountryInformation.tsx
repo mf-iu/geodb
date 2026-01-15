@@ -16,7 +16,8 @@ import SelectCountry from "./SelectCountry";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 export default function CountryInformation() {
-    const [geonameId, setGeonameId] = React.useState<number | null>(null); // Germany
+    const [geonameId, setGeonameId] = React.useState<number | null>(null);
+    const [sqlQuery, setSqlQuery] = React.useState<string>("");
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -28,10 +29,18 @@ export default function CountryInformation() {
     const handleChangeGeonameId = (geonameId: number | null) => {
         setGeonameId(geonameId);
 
-        const sqlQuery = `SELECT * FROM countryInfo WHERE geoname_id = ${geonameId};`;
-
-        run(sqlQuery);
+        const sql = `SELECT * FROM countryInfo WHERE geoname_id = ${geonameId};`;
+        setSqlQuery(sql);
     };
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    React.useEffect(
+        () => {
+            run(sqlQuery);
+        },
+        [sqlQuery]
+    );
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -50,6 +59,14 @@ export default function CountryInformation() {
                 <TableContainer component={Paper}>
                     <Table size="small" sx={{ width: "auto" }}>
                         <TableBody>
+                            <TableRow hover key={-1}>
+                                <TableCell key={0} sx={{ fontWeight: "bold" }}>
+                                    SQL Query
+                                </TableCell>
+                                <TableCell key={1}>
+                                    {sqlQuery}
+                                </TableCell>
+                            </TableRow>
                             {Object.keys(result.data.rows[0]).map(
                                 (attribute, attributeIdx) => (
                                     <TableRow hover key={attributeIdx}>

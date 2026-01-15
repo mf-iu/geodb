@@ -24,10 +24,13 @@ import useQuery from "../hooks/useQuery";
 const SelectCountry: React.FC = ({ geonameId, handleChangeGeonameId }) => {
     const [selectedGeonameId, setSelectedGeonameId] = React.useState<number | null>(geonameId);
 
+    const [sqlQuery, setSqlQuery] = React.useState<string>("");
+
     // States for the config menu
     const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
     const [continents, setContinents] = React.useState<string[]>(["EU"]);
-    const [onlyBigCountries, setOnlyBigCountries] = React.useState<boolean>(true);
+    const [onlyPopulousCountries, setOnlyPopulousCountries] = React.useState<boolean>(true);
+    const [onlyLargeCountries, setOnlyLargeCountries] = React.useState<boolean>(false);
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -43,14 +46,26 @@ const SelectCountry: React.FC = ({ geonameId, handleChangeGeonameId }) => {
 
             conditions.push(`continent IN (${continents.map((cnt) => (`'${cnt}'`)).join(", ")})`);
 
-            if (onlyBigCountries)
+            if (onlyPopulousCountries)
                 conditions.push("population >= 1000000");
 
-            const sqlQuery = `SELECT geoname_id, country FROM countryInfo WHERE ${conditions.join(" AND ")} ORDER BY country ASC;`;
+            if (onlyLargeCountries)
+                conditions.push("area >= 10000");
 
+            const sql = `SELECT geoname_id, country FROM countryInfo WHERE ${conditions.join(" AND ")} ORDER BY country ASC;`;
+
+            setSqlQuery(sql);
+        },
+        [continents, onlyPopulousCountries, onlyLargeCountries]
+    );
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    React.useEffect(
+        () => {
             run(sqlQuery);
         },
-        [continents, onlyBigCountries]
+        [sqlQuery]
     );
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,6 +120,10 @@ const SelectCountry: React.FC = ({ geonameId, handleChangeGeonameId }) => {
                 >
                     <List>
                         <ListItem>
+                            <ListItemText primary={sqlQuery} sx={{ fontSize: "xs" }}/>
+                        </ListItem>
+                        <Divider />
+                        <ListItem>
                             <Checkbox checked={continents.includes("EU")}
                                       onChange={() => handleContinentChange("EU")} />
                             <ListItemText primary="Europe" />
@@ -141,9 +160,14 @@ const SelectCountry: React.FC = ({ geonameId, handleChangeGeonameId }) => {
                         </ListItem>
                         <Divider />
                         <ListItem>
-                            <Checkbox checked={onlyBigCountries}
-                                      onChange={(event) => { setOnlyBigCountries(event.target.checked); }} />
+                            <Checkbox checked={onlyPopulousCountries}
+                                      onChange={(event) => { setOnlyPopulousCountries(event.target.checked); }} />
                             <ListItemText primary="Only big countries" />
+                        </ListItem>
+                        <ListItem>
+                            <Checkbox checked={onlyLargeCountries}
+                                      onChange={(event) => { setOnlyLargeCountries(event.target.checked); }} />
+                            <ListItemText primary="Only large countries" />
                         </ListItem>
                     </List>
                 </Menu>
